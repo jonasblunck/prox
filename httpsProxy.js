@@ -30,7 +30,7 @@ exports.setupHttpsProxy = function(server) {
  
       var hostport = getHostPortFromString( url, 443 );
  
-      console.log('Connecting to %s:%s', hostport[0], hostport[1] );
+      console.log('[%s] Connecting to %s:%s', socketRequest.remoteAddress, hostport[0], hostport[1] );
  
       // set up TCP connection
       var proxySocket = new net.Socket();
@@ -69,7 +69,7 @@ exports.setupHttpsProxy = function(server) {
         'end',
         function () {
           proxySocket.end();
-          console.log('Disconnecting from %s:%s', hostport[0], hostport[1] ); 
+//          console.log('Disconnecting from %s:%s', hostport[0], hostport[1] ); 
         }
       );
  
@@ -78,7 +78,7 @@ exports.setupHttpsProxy = function(server) {
         function ( err ) {
           socketRequest.write( "HTTP/" + httpVersion + " 500 Connection error\r\n\r\n" );
           
-          console.log('HTTPS proxy error: %s', err );    
+          console.log('[Proxy] HTTPS proxy error: %s', err );    
           socketRequest.end();
         }
       );
@@ -86,7 +86,7 @@ exports.setupHttpsProxy = function(server) {
       socketRequest.on(
         'error',
         function ( err ) {
-          console.log('HTTPS proxy error: %s', err );
+          console.log('[Requesting] HTTPS proxy error: %s', err );
           proxySocket.end();
         }
       );

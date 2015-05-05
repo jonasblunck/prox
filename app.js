@@ -5,8 +5,9 @@ var httpsProxy = require("./httpsProxy")
 var server = http.createServer(function(incomingRequest, response) {
   
   var req = http.request(incomingRequest.url, function(res) {
-    console.log("Requesting: " + incomingRequest.url);
-    
+    debugger;
+    console.log('(%s) Requesting: %s ', incomingRequest.socket.remoteAddress, incomingRequest.url);
+     
     var data = [];
 
     res.on('data', function (chunk) {
@@ -27,7 +28,6 @@ var server = http.createServer(function(incomingRequest, response) {
   
   req.end();    
 });
-
 
 httpsProxy.setupHttpsProxy(server);
 server.listen(proxyPort);
