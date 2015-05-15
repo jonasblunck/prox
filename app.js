@@ -10,7 +10,7 @@ function copyHeader(headerName, incomingRequest, outgoingRequest)
   }
 }
 
-function processRequest(incomingRequest, response)
+function processHttpRequest(incomingRequest, response)
 {
     var req = http.request(incomingRequest.url, function(res) {
         var data = [];
@@ -53,7 +53,7 @@ function processRequest(incomingRequest, response)
 }
 
 var server = http.createServer(function(incomingRequest, response) {
-  processRequest(incomingRequest, response);   
+  processHttpRequest(incomingRequest, response);   
 });
 
 httpsProxy.setupHttpsProxy(server);
