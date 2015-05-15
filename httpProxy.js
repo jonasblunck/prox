@@ -46,6 +46,7 @@ exports.processHttpRequest = function (incomingRequest, response)
     copyHeader('content-type', incomingRequest, req);
     copyHeader('content-length', incomingRequest, req);
     copyHeader('pragma', incomingRequest, req);
+    copyHeader('user-agent', incomingRequest, req);
     
     req.end();      
 }
