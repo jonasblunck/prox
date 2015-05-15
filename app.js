@@ -4,18 +4,23 @@ var httpsProxy = require("./httpsProxy")
 
 function processRequest(incomingRequest, response)
 {
-    var req = http.request(incomingRequest.url, function(res) {
+    var options = { 
+      hostname: incomingRequest.headers["host"],
+      path: incomingRequest.url,
+      method: incomingRequest.method,
+      headers: incomingRequest.headers
+   };
+
+    var req = http.request(options, function(res) {
         var data = [];
-    
+
         res.on('data', function (chunk) {
             data.push(chunk);
         });
         res.on('end', function() {
     
           for(var property in res.headers)
-          {
             response.setHeader(property, res.headers[property]);        
-          }
             
           response.statusCode = res.statusCode;
           response.write(Buffer.concat(data));            
