@@ -20,7 +20,16 @@ function processRequest(incomingRequest, response)
         res.on('end', function() {
     
           for(var property in res.headers)
-            response.setHeader(property, res.headers[property]);        
+          {
+            var headerValue = res.headers[property];
+
+            // this is a workaround for nodejs 
+            // in some cases, the location header is 'https://something.xxhttp://something.xx', i.e both https and http location without any seperation            
+            if (property == 'location')
+              headerValue = headerValue.split('http://')[0];
+            
+            response.setHeader(property, headerValue);
+          }        
             
           response.statusCode = res.statusCode;
           response.write(Buffer.concat(data));            
