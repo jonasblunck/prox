@@ -2,16 +2,17 @@ var proxyPort = 8001;
 var http = require("http");
 var httpsProxy = require("./httpsProxy")
 
+function copyHeader(headerName, incomingRequest, outgoingRequest)
+{
+  if (incomingRequest.headers[headerName])
+  {
+    outgoingRequest.setHeader(headerName, incomingRequest.headers[headerName]);
+  }
+}
+
 function processRequest(incomingRequest, response)
 {
-    var options = { 
-      hostname: incomingRequest.headers["host"],
-      path: incomingRequest.url,
-      method: incomingRequest.method,
-      headers: incomingRequest.headers
-   };
-
-    var req = http.request(options, function(res) {
+    var req = http.request(incomingRequest.url, function(res) {
         var data = [];
 
         res.on('data', function (chunk) {
@@ -22,12 +23,6 @@ function processRequest(incomingRequest, response)
           for(var property in res.headers)
           {
             var headerValue = res.headers[property];
-
-            // this is a workaround for nodejs 
-            // in some cases, the location header is 'https://something.xxhttp://something.xx', i.e both https and http location without any seperation            
-            if (property == 'location')
-              headerValue = headerValue.split('http://')[0];
-            
             response.setHeader(property, headerValue);
           }        
             
@@ -45,6 +40,14 @@ function processRequest(incomingRequest, response)
         response.write('<html><body>Unknown error. Perhaps address is incorrect?</body></html>');
         response.end();
     });
+    
+    copyHeader('cookie', incomingRequest, req);
+    copyHeader('accept', incomingRequest, req);
+    copyHeader('connection', incomingRequest, req);
+    copyHeader('authorization', incomingRequest, req);
+    copyHeader('content-type', incomingRequest, req);
+    copyHeader('content-length', incomingRequest, req);
+    copyHeader('pragma', incomingRequest, req);
     
     req.end();      
 }
