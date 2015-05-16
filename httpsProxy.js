@@ -1,6 +1,7 @@
 
 var http = require("http");
 var net = require("net");
+var stats = require("./userStats")
 
 var regex_hostport = /^([^:]+)(:([0-9]+))?$/;
 
@@ -29,8 +30,7 @@ exports.setupHttpsProxy = function(server) {
       var httpVersion = request['httpVersion'];
  
       var hostport = getHostPortFromString( url, 443 );
- 
-      console.log('[%s] Connecting to %s:%s', socketRequest.remoteAddress, hostport[0], hostport[1] );
+      var userAddress = socketRequest.remoteAddress;
  
       // set up TCP connection
       var proxySocket = new net.Socket();
@@ -38,8 +38,6 @@ exports.setupHttpsProxy = function(server) {
         parseInt( hostport[1] ), hostport[0],
         function () {
           proxySocket.write( bodyhead );
- 
-          // tell the caller the connection was successfully established
           socketRequest.write( "HTTP/" + httpVersion + " 200 Connection established\r\n\r\n" );
         }
       );
@@ -48,6 +46,7 @@ exports.setupHttpsProxy = function(server) {
         'data',
         function ( chunk ) {
           socketRequest.write( chunk );
+          stats.trackUsage(userAddress, url);
         }
       );
  
@@ -62,6 +61,7 @@ exports.setupHttpsProxy = function(server) {
         'data',
         function ( chunk ) {
           proxySocket.write( chunk );
+          stats.trackUsage(userAddress, url);
         }
       );
  
@@ -69,16 +69,12 @@ exports.setupHttpsProxy = function(server) {
         'end',
         function () {
           proxySocket.end();
-//          console.log('Disconnecting from %s:%s', hostport[0], hostport[1] ); 
         }
       );
  
       proxySocket.on(
         'error',
         function ( err ) {
-          socketRequest.write( "HTTP/" + httpVersion + " 500 Connection error\r\n\r\n" );
-          
-          console.log('[Proxy] HTTPS proxy error: %s', err );    
           socketRequest.end();
         }
       );
@@ -86,7 +82,7 @@ exports.setupHttpsProxy = function(server) {
       socketRequest.on(
         'error',
         function ( err ) {
-          console.log('[Requesting] HTTPS proxy error: %s', err );
+//          console.log('[Requesting] HTTPS proxy error: %s', err );
           proxySocket.end();
         }
       );

@@ -1,4 +1,5 @@
 var http = require("http");
+var stats = require("./userStats")
 
 function copyHeader(headerName, incomingRequest, outgoingRequest)
 {
@@ -10,6 +11,10 @@ function copyHeader(headerName, incomingRequest, outgoingRequest)
 
 exports.processHttpRequest = function (incomingRequest, response)
 {
+    // track request     
+    stats.trackUsage(incomingRequest.socket.remoteAddress, incomingRequest.url);
+
+    // process request
     var req = http.request(incomingRequest.url, function(res) {
         var data = [];
 
@@ -27,8 +32,6 @@ exports.processHttpRequest = function (incomingRequest, response)
           response.statusCode = res.statusCode;
           response.write(Buffer.concat(data));            
           response.end();
-    
-          console.log("[%s][%s] Processed %s.", res.statusCode, incomingRequest.socket.remoteAddress, incomingRequest.url);     
         });
     
     });
