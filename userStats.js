@@ -1,20 +1,46 @@
 
-var requestCount = {};
+var usageData = {};
 
-function trackRequestCount(user, address)
+function createTrackerItem(user, requestTime)
 {
-  if (!requestCount[user])
-    requestCount[user] = 0;
+  var item = {
+    'user' : user,
+    'startTime' : requestTime,
+    'endTime' : requestTime,
+    'requestCount' : 0,  
     
-  requestCount[user]++;
+    'getUsageMinutes' : function(){
+      return (this.endTime - this.startTime) / (1000 * 60);  
+    }
+  };
   
-  if (0 == (requestCount[user] % 100))
-  {
-    console.log('User [%s] has made %s requests.', user, requestCount[user]);
-  }  
+  return item;
 }
 
-exports.trackUsage = function(user, address)
+function internalGetUsage(user)
 {
-  trackRequestCount(user, address);
+  return usageData[user];
 }
+
+function internalTrackUsage(user, address, requestTime)
+{
+  if (null == usageData[user])
+  {
+    usageData[user] = createTrackerItem(user, requestTime);  
+  }
+  
+  var usage = usageData[user];
+  usage.requestCount++;
+  usage.endTime = requestTime;
+}
+
+exports.getUsage = function(user)
+{
+  return internalGetUsage(user);
+};
+
+exports.trackUsage = function(user, address, requestTime)
+{
+  internalTrackUsage(user, address, requestTime);
+};
+

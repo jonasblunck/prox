@@ -46,7 +46,7 @@ exports.setupHttpsProxy = function(server) {
         'data',
         function ( chunk ) {
           socketRequest.write( chunk );
-          stats.trackUsage(userAddress, url);
+          stats.trackUsage(userAddress, url, new Date());
         }
       );
  
@@ -61,7 +61,7 @@ exports.setupHttpsProxy = function(server) {
         'data',
         function ( chunk ) {
           proxySocket.write( chunk );
-          stats.trackUsage(userAddress, url);
+          stats.trackUsage(userAddress, url, new Date());
         }
       );
  

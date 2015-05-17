@@ -12,7 +12,7 @@ function copyHeader(headerName, incomingRequest, outgoingRequest)
 exports.processHttpRequest = function (incomingRequest, response)
 {
     // track request     
-    stats.trackUsage(incomingRequest.socket.remoteAddress, incomingRequest.url);
+    stats.trackUsage(incomingRequest.socket.remoteAddress, incomingRequest.url, new Date());
 
     // process request
     var req = http.request(incomingRequest.url, function(res) {
