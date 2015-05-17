@@ -62,7 +62,7 @@ function internalGetLastUsageData(user)
 
 function doReportingIfOld()
 {
-  var secondsBetweenReporting = 60 * 5;
+  var secondsBetweenReporting = 60;
   var now = new Date();
   
   if ((now - lastReportDate) > (1000 * secondsBetweenReporting))  
@@ -72,10 +72,8 @@ function doReportingIfOld()
     
     for (var userKey in usageData)
     {
-      var totalRequests = usageData[userKey].getTotalRequestCount();
-      var totalUsage = usageData[userKey].getTotalUsageMinutes();
-      
-      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes.\n", userKey, totalRequests, totalUsage));
+      var usage = usageData[userKey];
+      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes.\n", userKey, usage.getTotalRequestCount(), usage.getTotalUsageMinutes()));
     
       if (now.getDay() != lastReportDate.getDay())
       {
