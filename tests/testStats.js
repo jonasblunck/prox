@@ -49,7 +49,6 @@ function testMultiUsage()
   assert.areEqual(1, usage.nextItem.getUsageMinutes()); 
   assert.areEqual(2, usage.requestCount);
   assert.areEqual(3, usage.nextItem.requestCount);
-  assert.areEqual(5, usage.getTotalRequestCount());
 }
 
 testRequestCount();

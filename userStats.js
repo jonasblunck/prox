@@ -16,28 +16,6 @@ function createTrackerItem(user, requestTime)
     'nextItem' : null,  
     'getUsageMinutes' : function(){
       return (this.endTime - this.startTime) / (1000 * 60);  
-    },
-    'getTotalRequestCount' : function(){
-      var total = this.requestCount;
-      var item = this;
-      while (null != item.nextItem)
-      {
-        item = item.nextItem;
-        total += item.requestCount;
-      }
-      
-      return total;
-    },
-    'getTotalUsageMinutes' : function(){
-      var total = this.getUsageMinutes();
-      var item = this;
-      while (null != item.nextItem)
-      {
-        item = item.nextItem;
-        total += item.getUsageMinutes;
-      }
-      
-      return total;
     }
     
   };
@@ -73,7 +51,20 @@ function doReportingIfOld()
     for (var userKey in usageData)
     {
       var usage = usageData[userKey];
-      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes.\n", userKey, usage.getTotalRequestCount(), usage.getTotalUsageMinutes()));
+      var totalRequests = 0;
+      var totalMinutes = 0;
+      var entries = 0;
+      
+      while (null != usage)
+      {      
+        entries++;
+        totalRequests += usage.requestCount;
+        totalMinutes += usage.getUsageMinutes();
+        
+        usage = usage.nextItem;
+      }
+      
+      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", userKey, totalRequests, totalMinutes, entries));
     
       if (now.getDay() != lastReportDate.getDay())
       {
