@@ -1,9 +1,9 @@
 
-exports.isTrue = function(expression, message)
+exports.isTrue = function(expression)
 {
 	if (!expression)
 	{
-		console.log('Test failed: %s', message);
+		console.log('assert.isTrue failed.');
 	}	
 };
 
