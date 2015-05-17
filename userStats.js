@@ -1,6 +1,9 @@
+var fs = require('fs');
+var util = require('util');
 
 var usageData = {};
 var usageIdleThresholdMinutes = 2; // no request in 2 minutes means user is idle
+var lastReportDate = new Date();
 
 function createTrackerItem(user, requestTime)
 {
@@ -56,6 +59,35 @@ function internalGetLastUsageData(user)
   return usage;  
 }
 
+function doReportingIfOld()
+{
+  var secondsBetweenReporting = 10;
+  var now = new Date();
+  
+  if ((now - lastReportDate) > (1000 * secondsBetweenReporting))  
+  {
+    var fileName = util.format("proxy_log_%s_%s_%s.log", now.getFullYear(), now.getMonth(), now.getUTCDate());
+    var fileStream = fs.createWriteStream(fileName, 'ascii');
+    
+    for (var userKey in usageData)
+    {
+      var totalRequests = usageData[userKey].getTotalRequestCount();
+      var totalUsage = usageData[userKey].getTotalUsageMinutes();
+      
+      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes.\n", userKey, totalRequests, totalUsage));
+    
+      if (now.getDay() != lastReportDate.getDay())
+      {
+        // new day - clean out old old data
+        usageData[userKey] = null;             
+      }
+    }
+    
+  	fileStream.end();
+    lastReportDate = now;
+  }   
+}
+
 function internalTrackUsage(user, address, requestTime)
 {
   // create user book-keeping if we don't have it
@@ -74,16 +106,7 @@ function internalTrackUsage(user, address, requestTime)
   {
     usage.nextItem = createTrackerItem(user, requestTime); 
     usage.nextItem.requestCount++;  
-  }
-  
-  // temp reporting to std out
-  if (usageData[user].getTotalRequestCount() % 100 == 0)
-  {
-    var totalRequests = usageData[user].getTotalRequestCount();
-    var totalUsage = usageData[user].getTotalUsageMinutes();
-    
-    console.log("user '%s' has issued '%s' requests and used '%s' minutes", user, totalRequests, totalUsage);
-  }
+  }  
 }
 
 exports.getUsage = function(user)
@@ -94,5 +117,6 @@ exports.getUsage = function(user)
 exports.trackUsage = function(user, address, requestTime)
 {
   internalTrackUsage(user, address, requestTime);
+  doReportingIfOld();
 };
 
