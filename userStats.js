@@ -1,5 +1,6 @@
 var fs = require('fs');
 var util = require('util');
+var path = require('path');
 
 var usageData = {};
 var usageIdleThresholdMinutes = 2; // no request in 2 minutes means user is idle
@@ -61,13 +62,13 @@ function internalGetLastUsageData(user)
 
 function doReportingIfOld()
 {
-  var secondsBetweenReporting = 10;
+  var secondsBetweenReporting = 60 * 5;
   var now = new Date();
   
   if ((now - lastReportDate) > (1000 * secondsBetweenReporting))  
   {
     var fileName = util.format("proxy_log_%s_%s_%s.log", now.getFullYear(), now.getMonth(), now.getUTCDate());
-    var fileStream = fs.createWriteStream(fileName, 'ascii');
+    var fileStream = fs.createWriteStream(path.resolve(__dirname, fileName), 'ascii');
     
     for (var userKey in usageData)
     {
