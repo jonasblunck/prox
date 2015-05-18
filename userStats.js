@@ -1,6 +1,7 @@
 var fs = require('fs');
 var util = require('util');
 var path = require('path');
+var dns = require('dns');
 
 var usageData = {};
 var usageIdleThresholdMinutes = 2; // no request in 2 minutes means user is idle
@@ -38,6 +39,23 @@ function internalGetLastUsageData(user)
   return usage;  
 }
 
+function getDeviceName(ipAddress)
+{  
+  var hostName = ipAddress;
+  
+   dns.reverse(ipAddress, function (err, data) {
+     if (!err)
+     {
+       hostName = data[0];
+     }
+  });
+ 
+  if (!hostName || ('undefined' == hostName))
+    return ipAddress;
+    
+  return hostName;
+}
+
 function doReportingIfOld()
 {
   var secondsBetweenReporting = 60;
@@ -55,6 +73,8 @@ function doReportingIfOld()
       var totalMinutes = 0;
       var entries = 0;
       
+      var deviceName = getDeviceName(userKey);
+      
       while (null != usage)
       {      
         entries++;
@@ -64,7 +84,7 @@ function doReportingIfOld()
         usage = usage.nextItem;
       }
       
-      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", userKey, totalRequests, totalMinutes, entries));
+      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", deviceName, totalRequests, totalMinutes, entries));
     
       if (now.getDay() != lastReportDate.getDay())
       {
