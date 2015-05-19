@@ -14,12 +14,25 @@ function createTrackerItem(user, requestTime)
     'startTime' : requestTime,
     'endTime' : requestTime,
     'requestCount' : 0,
-    'nextItem' : null,  
+    'nextItem' : null,
+    'dnsName' : user,   
     'getUsageMinutes' : function(){
       return (this.endTime - this.startTime) / (1000 * 60);  
     }
     
   };
+  
+  // do reverse dns lookup on user
+  try {
+    dns.reverse(user, function(error, domain) {
+      if (!error)
+      {
+        item.dnsName = domain[0];
+      }
+    });
+  }
+  catch (e) {    
+  }
   
   return item;
 }
@@ -39,21 +52,37 @@ function internalGetLastUsageData(user)
   return usage;  
 }
 
-function getDeviceName(ipAddress)
-{  
-  var hostName = ipAddress;
+function getReportData(usage, userKey)
+{
+   var totalRequests = 0;
+   var totalMinutes = 0;
+   var entries = 0;
+   var firstTransaction = usage.startTime;
+   var lastTransaction = usage.endTime;
+   var dnsName = usage.dnsName;
+   
+   // iterate over all records
+   while (null != usage)
+   {      
+     entries++;
+     totalRequests += usage.requestCount;
+     totalMinutes += usage.getUsageMinutes();
+     lastTransaction = usage.endTime;
+      
+     usage = usage.nextItem;
+   }
+   
+  var item = {
+    'user' : userKey,
+    'startTime' : firstTransaction,
+    'endTime' : lastTransaction,
+    'totalRequests' : totalRequests,
+    'totalMinutes' : totalMinutes,
+    'recordCount' : entries,
+    'dnsName' : dnsName
+  };
   
-   dns.reverse(ipAddress, function (err, data) {
-     if (!err)
-     {
-       hostName = data[0];
-     }
-  });
- 
-  if (!hostName || ('undefined' == hostName))
-    return ipAddress;
-    
-  return hostName;
+  return item;   
 }
 
 function doReportingIfOld()
@@ -69,28 +98,19 @@ function doReportingIfOld()
     for (var userKey in usageData)
     {
       var usage = usageData[userKey];
-      var totalRequests = 0;
-      var totalMinutes = 0;
-      var entries = 0;
+      var reportData = getReportData(usage, userKey);
       
-      var deviceName = getDeviceName(userKey);
+      console.log('Reporting on %s (%s)', reportData.user, reportData.dnsName);
       
-      while (null != usage)
-      {      
-        entries++;
-        totalRequests += usage.requestCount;
-        totalMinutes += usage.getUsageMinutes();
-        
-        usage = usage.nextItem;
-      }
+      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", 
+        reportData.dnsName, 
+        reportData.totalRequests,
+        reportData.totalMinutes,
+        reportData.recordCount));
       
-      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", deviceName, totalRequests, totalMinutes, entries));
-    
-      if (now.getDay() != lastReportDate.getDay())
-      {
-        // new day - clean out old old data
+      // clear out data if new day
+      if (now.getDay() != reportData.endTime.getDay())
         usageData[userKey] = null;             
-      }
     }
     
   	fileStream.end();
