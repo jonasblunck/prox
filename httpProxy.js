@@ -1,14 +1,6 @@
 var http = require("http");
 var stats = require("./userStats")
 
-function copyHeader(headerName, incomingRequest, outgoingRequest)
-{
-  if (incomingRequest.headers[headerName])
-  {
-    outgoingRequest.setHeader(headerName, incomingRequest.headers[headerName]);
-  }
-}
-
 exports.processHttpRequest = function (incomingRequest, response)
 {
     // track request     
@@ -16,24 +8,14 @@ exports.processHttpRequest = function (incomingRequest, response)
 
     // process request
     var req = http.request(incomingRequest.url, function(res) {
-        var data = [];
-
         res.on('data', function (chunk) {
-            data.push(chunk);
+            response.write(chunk, 'binary');
         });
         res.on('end', function() {
-    
-          for(var property in res.headers)
-          {
-            var headerValue = res.headers[property];
-            response.setHeader(property, headerValue);
-          }        
-            
-          response.statusCode = res.statusCode;
-          response.write(Buffer.concat(data));            
           response.end();
         });
     
+        response.writeHead(res.statusCode, res.headers);
     });
     
     req.on('error', function(e) {
@@ -42,15 +24,9 @@ exports.processHttpRequest = function (incomingRequest, response)
         response.end();
     });
     
-    copyHeader('cookie', incomingRequest, req);
-    copyHeader('accept', incomingRequest, req);
-    copyHeader('connection', incomingRequest, req);
-    copyHeader('authorization', incomingRequest, req);
-    copyHeader('content-type', incomingRequest, req);
-    copyHeader('content-length', incomingRequest, req);
-    copyHeader('pragma', incomingRequest, req);
-    copyHeader('user-agent', incomingRequest, req);
-    
+    for(var header in incomingRequest.headers)
+      req.setHeader(header, incomingRequest.headers[header]);
+      
     req.end();      
 }
 
