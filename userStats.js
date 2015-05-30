@@ -92,30 +92,48 @@ function doReportingIfOld()
   
   if ((now - lastReportDate) > (1000 * secondsBetweenReporting))  
   {
-    var fileName = util.format("proxy_log_%s_%s_%s.log", now.getFullYear(), now.getMonth(), now.getUTCDate());
-    var fileStream = fs.createWriteStream(path.resolve(__dirname, fileName), 'ascii');
-    
+    internalGenerateHtml();
+    lastReportDate = now;
+  }   
+}
+
+function internalGenerateHtml()
+{
+    if (!fs.existsSync("stats"))
+      fs.mkdirSync("stats");
+      
+    var now = new Date();
+    var filename = util.format("stats/stats_%s%s%s.html", now.getFullYear(), now.getMonth(), now.getUTCDate());
+ 
+    var fileStream = fs.createWriteStream(filename, 'ascii');
+    fileStream.write("<html><head><title>prox user statistics</title>");
+    fileStream.write("<style type='text/css'>");
+    fileStream.write("th { text-align: left; }");    
+    fileStream.write("</style>");    
+    fileStream.write("</head>");
+    fileStream.write("<table style='width:100%'>");
+    fileStream.write("<tr><th>Date</th><th>Device</th><th>Time used</th><th>Total requests</th></tr>");
+     
     for (var userKey in usageData)
     {
       var usage = usageData[userKey];
       var reportData = getReportData(usage, userKey);
       
-      console.log('Reporting on %s (%s)', reportData.user, reportData.dnsName);
-      
-      fileStream.write(util.format("User '%s' has issued %s requests and used %s minutes [%s records].\n", 
-        reportData.dnsName, 
-        reportData.totalRequests,
-        reportData.totalMinutes,
-        reportData.recordCount));
+      fileStream.write("<tr>");
+      fileStream.write(util.format("<td>%s</td>", reportData.startTime));
+      fileStream.write(util.format("<td>%s</td>", reportData.dnsName));
+      fileStream.write(util.format("<td>%s</td>", reportData.totalMinutes));     
+      fileStream.write(util.format("<td>%s</td>", reportData.totalRequests));     
+      fileStream.write("</tr>");    
       
       // clear out data if new day
       if (now.getDay() != reportData.endTime.getDay())
-        usageData[userKey] = null;             
+        usageData[userKey] = null;              
     }
-    
-  	fileStream.end();
-    lastReportDate = now;
-  }   
+
+   fileStream.write("</table>");
+   fileStream.write("</body></html>");
+   fileStream.end();
 }
 
 function internalTrackUsage(user, address, requestTime)
