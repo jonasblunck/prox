@@ -115,13 +115,19 @@ function internalGenerateMainPage()
     fileStream.end();      
 }
 
+function formatDayOrMonth(n)
+{
+   return n > 9 ? "" + n: "0" + n;
+} 
+
 function internalGenerateHtml()
 {
     if (!fs.existsSync("stats"))
       fs.mkdirSync("stats");
       
     var now = new Date();
-    var filename = util.format("stats/stats_%s%s%s.html", now.getFullYear(), now.getMonth(), now.getUTCDate());
+    var filename = util.format("stats/stats_%s_%s_%s.html", now.getFullYear(), 
+      formatDayOrMonth(now.getMonth()), formatDayOrMonth(now.getUTCDate()));
  
     var fileStream = fs.createWriteStream(filename, 'ascii');
     fileStream.write("<html><head><title>prox user statistics</title>");
