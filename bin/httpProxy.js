@@ -1,6 +1,8 @@
 var http = require("http");
-var stats = require("./userStats")
+var stats = require("./userStats");
 var fs = require('fs');
+var path = require('path');
+var util = require('util');
 
 function IsRequestForLocalResource(incomingRequest)
 {
@@ -14,18 +16,49 @@ function writeResponse(response, statusCode, contentType, content)
     response.end();   
 }
 
+function GetRootDir()
+{
+    return rootPath = path.join(__dirname, '..');       
+}
+
+function GenerateListing(directory, response)
+{
+    var relativeRoot = directory.substr(GetRootDir().length);
+    
+    var files = fs.readdirSync(directory);
+    var html = '<html><head><title>Listing</title></head><body>';
+    
+    for(var i = 0; i < files.length; ++i)
+    {
+       html += util.format("<a href='%s/%s'>%s</a></br>", relativeRoot, files[i], files[i]);    
+    }
+    
+    html += '</body></html>';
+    
+    writeResponse(response, 200, 'text/html', html);
+}
+
 function ProcessLocalRequest(incomingRequest, response)
 {
-    var resource = "../" + incomingRequest.url.substr(1); // first char should be a '/' which we don't want to include
-    
-    if (fs.existsSync(resource))
+    var resource = path.join(GetRootDir(), incomingRequest.url.substr(1)); // first char should be a '/' which we don't want to include
+
+    stats.trackUsage(incomingRequest.socket.remoteAddress, resource, new Date());
+
+    if (!fs.existsSync(resource))
     {
+        writeResponse(response, 404, 'text/html', '<html><body>Cannot find what you are looking for.</body></html>');  
+        return;     
+    }
+    
+    if (fs.existsSync(resource) && fs.lstatSync(resource).isDirectory())
+    {
+        GenerateListing(resource, response);        
+    }    
+    else 
+    {
+        console.log("GET for file: " + resource);
         writeResponse(response, 200, 'text/html', fs.readFileSync(resource));
     }
-    else
-    {
-        writeResponse(response, 404, 'text/html', '<html><body>Cannot find what you are looking for.</body></html>');
-    }    
 }
 
 function ProcessExternalRequest(incomingRequest, response)

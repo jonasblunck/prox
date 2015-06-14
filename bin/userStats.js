@@ -93,26 +93,9 @@ function doReportingIfOld()
   if ((now - lastReportDate) > (1000 * secondsBetweenReporting))  
   {
     internalGenerateHtml();
-    internalGenerateMainPage();
     
     lastReportDate = now;
   }   
-}
-
-function internalGenerateMainPage()
-{
-    var fileStream = fs.createWriteStream("stats.html", 'ascii');
-    var files = fs.readdirSync('./stats');    
-
-    fileStream.write("<html><head><title>prox overview</title></head><body>");
-
-    for(var i = 0; i < files.length; ++i)
-    {
-      fileStream.write(util.format("<a href='/stats/%s'>%s</a><br/>", files[i], files[i]));
-    }
-      
-    fileStream.write("</body></html>");
-    fileStream.end();      
 }
 
 function formatDayOrMonth(n)
