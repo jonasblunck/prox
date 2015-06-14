@@ -16,7 +16,7 @@ function writeResponse(response, statusCode, contentType, content)
 
 function ProcessLocalRequest(incomingRequest, response)
 {
-    var resource = incomingRequest.url.substr(1); // first char should be a '/' which we don't want to include
+    var resource = "../" + incomingRequest.url.substr(1); // first char should be a '/' which we don't want to include
     
     if (fs.existsSync(resource))
     {

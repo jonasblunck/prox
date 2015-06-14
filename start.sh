@@ -1,0 +1,2 @@
+node bin/app.js
+

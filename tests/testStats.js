@@ -1,5 +1,5 @@
 var assert = require("./assert");
-var stats = require("../userStats");
+var stats = require("../bin/userStats");
 
 function testRequestCount()
 {
