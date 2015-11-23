@@ -20,5 +20,7 @@
           <key>PATH</key>
           <string>/usr/local/bin:$PATH</string>
         </dict>
+        <key>WorkingDirectory</key>
+        <string>/Users/jonas/depot/prox</string>
 </dict>
 </plist>
