@@ -24,10 +24,14 @@ function createTrackerItem(user, requestTime)
   
   // do reverse dns lookup on user
   try {
-    dns.reverse(user, function(error, domain) {
+    var tokens = user.split(':');
+    var lookupId = tokens[tokens.length - 1];
+    
+    dns.reverse(lookupId, function(error, domain) {
       if (!error)
       {
         item.dnsName = domain[0];
+        console.log(item.dnsName);
       }
     });
   }
