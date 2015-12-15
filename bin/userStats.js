@@ -114,7 +114,7 @@ function internalGenerateHtml()
       
     var now = new Date();
     var filename = util.format("stats/stats_%s_%s_%s.html", now.getFullYear(), 
-      formatDayOrMonth(now.getMonth()), formatDayOrMonth(now.getUTCDate()));
+      formatDayOrMonth(now.getMonth() + 1), formatDayOrMonth(now.getUTCDate()));
  
     var fileStream = fs.createWriteStream(filename, 'ascii');
     fileStream.write("<html><head><title>prox user statistics</title>");
