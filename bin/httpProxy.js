@@ -64,32 +64,61 @@ function ProcessLocalRequest(incomingRequest, response)
 function ProcessExternalRequest(incomingRequest, response)
 {
     // track request     
-    stats.trackUsage(incomingRequest.socket.remoteAddress, incomingRequest.url, new Date());
+   stats.trackUsage(incomingRequest.socket.remoteAddress, incomingRequest.url, new Date());
+   
+   var host = incomingRequest.headers['host'];
+   var requestPathOffset = incomingRequest.url.search(host) + host.length;
+   var path = incomingRequest.url.substr(requestPathOffset);
+   
+   var options = {
+        hostname: host,
+        port: 80,
+        path: path,
+        method: incomingRequest.method,
+        headers: incomingRequest.headers,
+    }; 
 
-    // process request
-    var req = http.request(incomingRequest.url, function(res) {
+    // initiate the request
+    var req = http.request(options, function(res) {
+        
         res.on('data', function (chunk) {
             response.write(chunk, 'binary');
         });
         res.on('end', function() {
-          response.end();
+            response.end();
         });
-    
+                
         response.writeHead(res.statusCode, res.headers);
     });
     
     req.on('error', function(e) {
         writeResponse(response, 500, 'text/html', '<html><body>Unknown error. Perhaps address is incorrect?</body></html>');
+        console.log('The following error occurred: ' + e);
     });
-    
-    for(var header in incomingRequest.headers)
-      req.setHeader(header, incomingRequest.headers[header]);
-      
-    req.end();         
+
+    // for POST actions, we need to write the body to the request
+    if (incomingRequest.method == 'POST')
+    {   
+        var bytesleftToWrite = incomingRequest.headers['content-length'];
+        
+        incomingRequest.on('data', function(chunk){
+            bytesleftToWrite = bytesleftToWrite - chunk.length;
+            req.write(chunk);
+            
+            if (bytesleftToWrite == 0)
+            {
+              req.end();
+            }            
+        });
+    }
+    else
+    {
+        req.end();
+    }
 }
 
 exports.processHttpRequest = function (incomingRequest, response)
-{
+{    
     if (IsRequestForLocalResource(incomingRequest))
     {
         ProcessLocalRequest(incomingRequest, response);
